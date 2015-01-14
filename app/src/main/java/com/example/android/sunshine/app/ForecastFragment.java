@@ -54,6 +54,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     private String mLocation;
     private ForecastAdapter mForecastAdapter;
 
+    public interface Callback
+    {
+        public void onItemSelected(String date);
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState)
@@ -134,8 +138,9 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 if (cursor != null && cursor.moveToPosition(position))
                 {
                     String dateString = cursor.getString(COL_WEATHER_DATE);
-                    Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(DetailActivity.DATE_KEY, dateString);
-                    startActivity(intent);
+                    ((Callback)getActivity()).onItemSelected(dateString);
+                    //Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(DetailActivity.DATE_KEY, dateString);
+                    //startActivity(intent);
                 }
             }
         });

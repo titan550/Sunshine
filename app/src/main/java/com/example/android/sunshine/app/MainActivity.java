@@ -11,8 +11,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class MainActivity extends ActionBarActivity
+public class MainActivity extends ActionBarActivity implements ForecastFragment.Callback
 {
+    private boolean mTwoPane = false;
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
@@ -23,14 +25,23 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        Log.i("Status", "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState == null)
+        if (findViewById(R.id.weather_detail_container) != null)
         {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new ForecastFragment())
-                    .commit();
+            mTwoPane = true;
+            Log.d("two pane UI", "2 pane ui");
+
+            if (savedInstanceState == null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.weather_detail_container, new DetailFragment())
+                        .commit();
+            }
+        }
+        else
+        {
+            Log.d("one pane UI", "1 pane ui");
+            mTwoPane = false;
         }
     }
 
@@ -66,5 +77,29 @@ public class MainActivity extends ActionBarActivity
             showMap();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemSelected(String date)
+    {
+        if(mTwoPane == true)
+        {
+            Bundle args = new Bundle();
+            args.putString(DetailActivity.DATE_KEY, date);
+
+            DetailFragment fragment = new DetailFragment();
+            fragment.setArguments(args);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.weather_detail_container, fragment)
+                    .commit();
+        }
+        else
+        {
+            Intent intent = new Intent(this, DetailActivity.class)
+                    .putExtra(DetailActivity.DATE_KEY, date);
+            startActivity(intent);
+        }
+
     }
 }
