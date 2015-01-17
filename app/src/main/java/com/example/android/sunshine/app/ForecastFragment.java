@@ -1,6 +1,5 @@
 package com.example.android.sunshine.app;
 
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -52,14 +51,27 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             WeatherEntry.COLUMN_WEATHER_ID
     };
     private String mLocation;
+    private int mPosition;
     private ForecastAdapter mForecastAdapter;
+    private ListView mListView;
+    private boolean mUseTodayLayout;
+
+    private static final String SELECTED_KEY = "selected_position";
 
     public interface Callback
     {
         public void onItemSelected(String date);
     }
 
-    @Override
+    public void setUseTodayLayout(boolean useTodayLayout)
+    {
+        mUseTodayLayout = useTodayLayout;
+        if (mForecastAdapter != null)
+        {
+            mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
+        }
+    }
+
     public void onActivityCreated(Bundle savedInstanceState)
     {
         super.onActivityCreated(savedInstanceState);
@@ -72,6 +84,16 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         super.onCreate(savedInstanceState);
         // if not indicated the options will not be added to menu
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        if (mPosition != ListView.INVALID_POSITION)
+        {
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
     }
 
     @Override
@@ -124,12 +146,13 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         ArrayList<String> weekForecast = new ArrayList<String>();
 
         mForecastAdapter = new ForecastAdapter(getActivity(), null, 0);
+        mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
 
 
-        ListView myList = (ListView) rootView.findViewById(R.id.listview_forecast);
-        myList.setAdapter(mForecastAdapter);
+        mListView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        mListView.setAdapter(mForecastAdapter);
 
-        myList.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l)
@@ -138,12 +161,18 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 if (cursor != null && cursor.moveToPosition(position))
                 {
                     String dateString = cursor.getString(COL_WEATHER_DATE);
-                    ((Callback)getActivity()).onItemSelected(dateString);
+                    ((Callback) getActivity()).onItemSelected(dateString);
                     //Intent intent = new Intent(getActivity(), DetailActivity.class).putExtra(DetailActivity.DATE_KEY, dateString);
                     //startActivity(intent);
                 }
+                mPosition = position;
             }
         });
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY))
+        {
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
 
         return rootView;
     }
@@ -185,6 +214,11 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public void onLoadFinished(Loader<Cursor> loader, Cursor data)
     {
         mForecastAdapter.swapCursor(data);
+
+        if (mPosition != ListView.INVALID_POSITION)
+        {
+            mListView.smoothScrollToPosition(mPosition);
+        }
     }
 
     // ?? when is is called? adds null data to mForecastFragment
